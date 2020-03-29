@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import wrss.rest.dto.PostDto;
+import wrss.rest.dto.UserDto;
 import wrss.rest.entity.PostEntity;
 import wrss.rest.entity.UserEntity;
 import wrss.rest.exception.PostServiceException;
@@ -87,7 +88,10 @@ public class PostServiceImpl implements PostService {
 		
 		if (postEntity == null) throw new PostServiceException("Post with id <" + postId + "> not found");
 		
+		UserDto userDto = new ModelMapper().map(postEntity.getUser(), UserDto.class);
+		
 		PostDto post = new ModelMapper().map(postEntity, PostDto.class);
+		post.setUserDto(userDto);
 		
 		return post;
 	}

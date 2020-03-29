@@ -1,5 +1,8 @@
 package wrss.rest.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +10,7 @@ import java.util.List;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -24,6 +28,7 @@ import wrss.rest.dto.UserDto;
 import wrss.rest.models.request.UserDetailsRequestModel;
 import wrss.rest.models.request.UserRequestModel;
 import wrss.rest.models.request.UserWithDetailsRequestModel;
+import wrss.rest.models.response.UserDetailsResponseModel;
 import wrss.rest.models.response.UserResponseModel;
 import wrss.rest.models.response.UserWithDetailsResponseModel;
 import wrss.rest.service.UserDetailsService;
@@ -50,6 +55,8 @@ public class UsersController {
 		for (UserDto temp : usersDto) {
 			
 			UserResponseModel user = new ModelMapper().map(temp, UserResponseModel.class);
+			Link userLink = linkTo(UsersController.class).slash("users").slash(user.getUserId()).withSelfRel();
+			user.add(userLink);
 			users.add(user);
 		}
 		
@@ -64,17 +71,23 @@ public class UsersController {
 		
 		UserWithDetailsResponseModel user = new ModelMapper().map(userDto, UserWithDetailsResponseModel.class);
 
+		Link postsLink = linkTo(methodOn(PostController.class).getPosts(1, 10, userId)).withRel("posts");
+		user.add(postsLink);
+		
 		return user;
 	}
 	
 	@GetMapping(path="/users/{userId}/details",
 			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
-	public UserDetailsRequestModel getUserDetails(@PathVariable String userId) {
+	public UserDetailsResponseModel getUserDetails(@PathVariable String userId) {
 		
 		UserDetailsDto userDetailsDto = userDetailsService.getUserDetails(userId);
 		
-		UserDetailsRequestModel userDetails = new UserDetailsRequestModel();
+		UserDetailsResponseModel userDetails = new UserDetailsResponseModel();
 		BeanUtils.copyProperties(userDetailsDto, userDetails);
+		
+		Link postsLink = linkTo(methodOn(UsersController.class).getUser(userId)).withRel("user");
+		userDetails.add(postsLink);
 		
 		return userDetails;
 	}
@@ -82,15 +95,17 @@ public class UsersController {
 	@PostMapping(path="/users",
 			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE },
 			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
-	public UserResponseModel addUser(@RequestBody UserWithDetailsRequestModel userModel) {
+	public UserWithDetailsResponseModel addUser(@RequestBody UserWithDetailsRequestModel userModel) {
 		
-		ModelMapper modelMapper = new ModelMapper();
-		UserDto userDto = modelMapper.map(userModel, UserDto.class);
+		UserDto userDto = new ModelMapper().map(userModel, UserDto.class);
 
 		UserDto createdUser = userService.createUser(userDto);
 		
-		UserResponseModel userResponseModel = new UserResponseModel();
-		BeanUtils.copyProperties(createdUser, userResponseModel);
+		UserWithDetailsResponseModel userResponseModel = new ModelMapper()
+				.map(createdUser, UserWithDetailsResponseModel.class);
+		
+		Link link = linkTo(methodOn(UsersController.class).getUser(userResponseModel.getUserId())).withSelfRel();
+		userResponseModel.add(link);
 		
 		return userResponseModel;
 	}
@@ -108,6 +123,9 @@ public class UsersController {
 		
 		UserWithDetailsResponseModel userResponseModel = new ModelMapper().map(updatedUser,
 				UserWithDetailsResponseModel.class);
+		
+		Link link = linkTo(methodOn(PostController.class).getPosts(1, 10, userId)).withRel("posts");
+		userResponseModel.add(link);
 
 		return userResponseModel;
 		
@@ -126,6 +144,12 @@ public class UsersController {
 		
 		UserWithDetailsResponseModel userResponseModel = new ModelMapper().map(updatedUserDetails, 
 				UserWithDetailsResponseModel.class);
+		
+		Link link = linkTo(methodOn(UsersController.class).getUser(userId)).withRel("user");
+		userResponseModel.add(link);
+		
+		Link postsLink = linkTo(methodOn(PostController.class).getPosts(1, 10, userId)).withRel("posts");
+		userResponseModel.add(postsLink);
 
 		return userResponseModel;
 		

@@ -1,11 +1,15 @@
 package wrss.rest.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,6 +45,10 @@ public class PostController {
 		for (PostDto temp: postsDto) {
 			
 			PostResponseModel postResponseModel = new ModelMapper().map(temp, PostResponseModel.class);
+			
+			Link link = linkTo(methodOn(PostController.class).getPost(temp.getId())).withSelfRel();
+			postResponseModel.add(link);
+			
 			posts.add(postResponseModel);
 		}
 		
@@ -54,6 +62,9 @@ public class PostController {
 		PostDto postDto = postService.getPost(postId);
 		
 		PostResponseModel post = new ModelMapper().map(postDto, PostResponseModel.class);
+		
+		Link link = linkTo(methodOn(UsersController.class).getUser(postDto.getUserDto().getUserId())).withRel("user");
+		post.add(link);
 
 		return post;
 	}
@@ -70,8 +81,14 @@ public class PostController {
 		for (PostDto temp: postsDto) {
 			
 			PostResponseModel postResponseModel = new ModelMapper().map(temp, PostResponseModel.class);
+
+			Link link = linkTo(methodOn(PostController.class).getPost(temp.getId())).withSelfRel();
+			postResponseModel.add(link);
+			
 			posts.add(postResponseModel);
 		}
+		
+		
 		
 		return posts;
 	}
@@ -88,6 +105,9 @@ public class PostController {
 		PostDto createdPost = postService.createPost(postDto, userId);
 		
 		PostResponseModel postResponseModel = new ModelMapper().map(createdPost, PostResponseModel.class);
+		
+		Link link = linkTo(methodOn(PostController.class).getPost(createdPost.getId())).withSelfRel();
+		postResponseModel.add(link);
 	
 		return postResponseModel;
 	}
@@ -104,6 +124,9 @@ public class PostController {
 		PostDto updatedPost = postService.updatePost(postDto, userId, postId);
 		
 		PostResponseModel postResponseModel = new ModelMapper().map(updatedPost, PostResponseModel.class);
+		
+		Link link = linkTo(methodOn(PostController.class).getPost(updatedPost.getId())).withSelfRel();
+		postResponseModel.add(link);
 	
 		return postResponseModel;
 	}

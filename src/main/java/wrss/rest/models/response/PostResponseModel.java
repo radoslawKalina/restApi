@@ -1,6 +1,8 @@
 package wrss.rest.models.response;
 
-public class PostResponseModel {
+import org.springframework.hateoas.RepresentationModel;
+
+public class PostResponseModel extends RepresentationModel {
 	
 	private int id;
 	private String title;

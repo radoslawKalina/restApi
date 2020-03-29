@@ -1,12 +1,15 @@
 package wrss.rest.models.response;
 
-public class UserResponseModel {
+import org.springframework.hateoas.RepresentationModel;
+
+public class UserResponseModel extends RepresentationModel  {
 	
 	private String userId;
 	private String username;
 	private String firstName;
 	private String lastName;
 	private String email;
+	
 	
 	public String getUserId() {
 		return userId;
