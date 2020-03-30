@@ -11,7 +11,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.Link;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiOperation;
+import springfox.documentation.annotations.ApiIgnore;
 import wrss.rest.dto.UserDetailsDto;
 import wrss.rest.dto.UserDto;
 import wrss.rest.models.request.UserDetailsRequestModel;
@@ -44,8 +46,9 @@ public class UsersController {
 	@Autowired
 	private UserDetailsService userDetailsService;
 	
-	@GetMapping(path="/users",
-			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	@ApiOperation("Get list of users")
+	@ApiImplicitParam(name="authorization", value="Bearer JWT Token", paramType="header")
+	@GetMapping(path="/users")
 	public List<UserResponseModel> getUsers(@RequestParam(value="page", defaultValue="1") int page,
 											@RequestParam(value="limit", defaultValue="10") int limit) {
 		
@@ -62,23 +65,27 @@ public class UsersController {
 		
 		return users;
 	}
-	
-	@GetMapping(path="/users/{userId}",
-			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+
+	@ApiOperation(value = "Get user by userId", 
+			notes = "For userId you should use that given in /api/login response headers")
+	@ApiImplicitParam(name="authorization", value="Bearer JWT Token", paramType="header")
+	@GetMapping(path="/users/{userId}")
 	public UserWithDetailsResponseModel getUser(@PathVariable String userId) {
 		
 		UserDto userDto = userService.getUserByUserId(userId);
 		
 		UserWithDetailsResponseModel user = new ModelMapper().map(userDto, UserWithDetailsResponseModel.class);
 
-		Link postsLink = linkTo(methodOn(PostController.class).getPosts(1, 10, userId)).withRel("posts");
+		Link postsLink = linkTo(methodOn(PostsController.class).getPosts(1, 10, userId)).withRel("posts");
 		user.add(postsLink);
 		
 		return user;
 	}
 	
-	@GetMapping(path="/users/{userId}/details",
-			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	@ApiOperation(value = "Get user details by userId",
+			notes = "For userId you should use that given in /api/login response headers")
+	@ApiImplicitParam(name="authorization", value="Bearer JWT Token", paramType="header")
+	@GetMapping(path="/users/{userId}/details")
 	public UserDetailsResponseModel getUserDetails(@PathVariable String userId) {
 		
 		UserDetailsDto userDetailsDto = userDetailsService.getUserDetails(userId);
@@ -92,9 +99,10 @@ public class UsersController {
 		return userDetails;
 	}
 	
-	@PostMapping(path="/users",
-			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE },
-			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	@ApiOperation("Create new user")
+	@PostMapping(path="/users")
+			//consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
+			//produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 	public UserWithDetailsResponseModel addUser(@RequestBody UserWithDetailsRequestModel userModel) {
 		
 		UserDto userDto = new ModelMapper().map(userModel, UserDto.class);
@@ -110,11 +118,12 @@ public class UsersController {
 		return userResponseModel;
 	}
 	
-	@PutMapping(path="/users/{userId}", 
-			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE },
-			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	@ApiOperation(value = "Update user",
+			notes = "For userId you should use that given in /api/login response headers")
+	@ApiImplicitParam(name="authorization", value="Bearer JWT Token", paramType="header")
+	@PutMapping(path="/users/{userId}")
 	public UserWithDetailsResponseModel updateUser(@RequestBody UserRequestModel userModel, @PathVariable String userId,
-												   Authentication auth) {
+												   @ApiIgnore Authentication auth) {
 		
 		UserDto userDto = new ModelMapper().map(userModel, UserDto.class);
 		userDto.setAuthenticationEmail(auth.getName());
@@ -124,18 +133,19 @@ public class UsersController {
 		UserWithDetailsResponseModel userResponseModel = new ModelMapper().map(updatedUser,
 				UserWithDetailsResponseModel.class);
 		
-		Link link = linkTo(methodOn(PostController.class).getPosts(1, 10, userId)).withRel("posts");
+		Link link = linkTo(methodOn(PostsController.class).getPosts(1, 10, userId)).withRel("posts");
 		userResponseModel.add(link);
 
 		return userResponseModel;
 		
 	}
 	
-	@PutMapping(path="/users/{userId}/details", 
-			consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE },
-			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+	@ApiOperation(value = "Delete user",
+			notes = "For userId you should use that given in /api/login response headers")
+	@ApiImplicitParam(name="authorization", value="Bearer JWT Token", paramType="header")
+	@PutMapping(path="/users/{userId}/details")
 	public UserWithDetailsResponseModel updateUserDetails(@RequestBody UserDetailsRequestModel userDetailsModel, @PathVariable String userId,
-												   Authentication auth) {
+														  @ApiIgnore Authentication auth) {
 		
 		UserDetailsDto userDetailsDto = new ModelMapper().map(userDetailsModel, UserDetailsDto.class);
 		userDetailsDto.setAuthenticationEmail(auth.getName());
@@ -148,16 +158,16 @@ public class UsersController {
 		Link link = linkTo(methodOn(UsersController.class).getUser(userId)).withRel("user");
 		userResponseModel.add(link);
 		
-		Link postsLink = linkTo(methodOn(PostController.class).getPosts(1, 10, userId)).withRel("posts");
+		Link postsLink = linkTo(methodOn(PostsController.class).getPosts(1, 10, userId)).withRel("posts");
 		userResponseModel.add(postsLink);
 
 		return userResponseModel;
 		
 	}
 	
-	@DeleteMapping(path="/users/{userId}",
-			produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
-	public HashMap<String, String> deleteUser(@PathVariable String userId, Authentication auth) {
+	@ApiImplicitParam(name="authorization", value="Bearer JWT Token", paramType="header")
+	@DeleteMapping(path="/users/{userId}")
+	public HashMap<String, String> deleteUser(@PathVariable String userId, @ApiIgnore Authentication auth) {
 		
 		userService.deleteUser(userId, auth.getName());
 		
