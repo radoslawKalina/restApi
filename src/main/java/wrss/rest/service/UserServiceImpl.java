@@ -42,9 +42,11 @@ public class UserServiceImpl implements UserService {
 		Pageable pageRequest = PageRequest.of(page-1, limit);
 		
 		Page<UserEntity> usersEntityPage = userRepository.findAll(pageRequest);
-		List<UserEntity> usersEntity = usersEntityPage.getContent();
+		System.out.println(usersEntityPage);
 		
-		if (usersEntity.isEmpty()) throw new UserServiceException("Empty");
+		if (usersEntityPage.isEmpty()) throw new UserServiceException("Empty");
+		
+		List<UserEntity> usersEntity = usersEntityPage.getContent();
 		
 		List<UserDto> users = new ArrayList<>();
 		for (UserEntity temp : usersEntity) {

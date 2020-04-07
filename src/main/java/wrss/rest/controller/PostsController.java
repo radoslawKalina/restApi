@@ -94,8 +94,6 @@ public class PostsController {
 			posts.add(postResponseModel);
 		}
 		
-		
-		
 		return posts;
 	}
 	

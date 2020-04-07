@@ -112,6 +112,9 @@ public class PostServiceImpl implements PostService {
 		
 		PostDto savedPost = new ModelMapper().map(savedPostEntity, PostDto.class);
 		
+		UserDto userDto = new ModelMapper().map(savedPostEntity.getUser(), UserDto.class);
+		savedPost.setUserDto(userDto);
+		
 		return savedPost;
 	}
 
@@ -134,6 +137,9 @@ public class PostServiceImpl implements PostService {
 		PostEntity savedPostEntity = postRepository.save(post);
 		
 		PostDto savedPost = new ModelMapper().map(savedPostEntity, PostDto.class);
+		
+		UserDto userDto = new ModelMapper().map(savedPostEntity.getUser(), UserDto.class);
+		savedPost.setUserDto(userDto);
 		
 		return savedPost;
 	}

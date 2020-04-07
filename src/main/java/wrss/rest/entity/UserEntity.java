@@ -47,6 +47,16 @@ public class UserEntity implements Serializable {
 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
 	private List<PostEntity> posts;
+	
+	public UserEntity() {
+	}
+
+	public UserEntity(String username, String firstName, String lastName, String email) {
+		this.username = username;
+		this.firstName = firstName;
+		this.lastName = lastName;
+		this.email = email;
+	}
 
 	public int getId() {
 		return id;
